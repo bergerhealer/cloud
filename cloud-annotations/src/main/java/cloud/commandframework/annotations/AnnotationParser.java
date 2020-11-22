@@ -52,6 +52,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
@@ -256,6 +257,57 @@ public final class AnnotationParser<C> {
         this.parseParsers(instance);
         /* Then construct commands from @CommandMethod annotated classes */
         final Method[] methods = instance.getClass().getDeclaredMethods();
+
+        // Call any methods with the InitializationMethod annotation
+        for (final Method method : methods) {
+            if (method.getAnnotation(InitializationMethod.class) == null) {
+                continue;
+            }
+            if (!method.isAccessible()) {
+                method.setAccessible(true);
+            }
+            if (method.getReturnType() != Void.TYPE) {
+                throw new IllegalArgumentException(String.format(
+                        "@InitializationMethod annotated method '%s' has non-void return type",
+                        method.getName()
+                ));
+            }
+            if (Modifier.isStatic(method.getModifiers())) {
+                throw new IllegalArgumentException(String.format(
+                        "@InitializationMethod annotated method '%s' can not be static",
+                        method.getName()
+                ));
+            }
+
+            // Check parameters of method and try to fill those in
+            final Object[] args = new Object[method.getParameterCount()];
+            for (int i = 0; i < args.length; i++) {
+                Class<?> paramType = method.getParameterTypes()[i];
+                if (paramType.isAssignableFrom(this.manager.getClass())) {
+                    args[i] = this.manager;
+                } else if (paramType.isAssignableFrom(this.getClass())) {
+                    args[i] = this;
+                } else {
+                    throw new IllegalArgumentException(String.format(
+                            "@InitializationMethod annotated method '%s' has a parameter "
+                                + "with an unsupported type %s",
+                            method.getName(),
+                            paramType.getName()
+                    ));
+                }
+            }
+
+            // Invoke the method
+            try {
+                method.invoke(instance, args);
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                throw new UnsupportedOperationException(String.format(
+                        "Failed to initialize @InitializationMethod %s", method.getName()),
+                        e);
+            }
+        }
+
+        // Register commands
         final Collection<CommandMethodPair> commandMethodPairs = new ArrayList<>();
         for (final Method method : methods) {
             final CommandMethod commandMethod = method.getAnnotation(CommandMethod.class);
