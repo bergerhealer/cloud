@@ -159,7 +159,7 @@ class CommandTreeTest {
     }
 
     @Test
-    void parse() {
+    void parse() throws Throwable {
         final Pair<Command<TestCommandSender>, Exception> command = manager.getCommandTree()
                 .parse(
                         new CommandContext<>(
@@ -204,7 +204,7 @@ class CommandTreeTest {
     }
 
     @Test
-    void testAlias() {
+    void testAlias() throws Throwable {
         manager.getCommandTree()
                 .parse(
                         new CommandContext<>(

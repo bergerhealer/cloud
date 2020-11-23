@@ -119,16 +119,14 @@ public abstract class CommandExecutionCoordinator<C> {
                     if (this.getCommandTree().getCommandManager().postprocessContext(commandContext, command) == State.ACCEPTED) {
                         try {
                             command.getCommandExecutionHandler().execute(commandContext);
-                        } catch (final CommandExecutionException exception) {
-                            completableFuture.completeExceptionally(exception);
-                        } catch (final Exception exception) {
-                            completableFuture.completeExceptionally(new CommandExecutionException(exception));
+                        } catch (Throwable handlerException) {
+                            throw new CommandExecutionException(handlerException);
                         }
                     }
                     completableFuture.complete(new CommandResult<>(commandContext));
                 }
-            } catch (final Exception e) {
-                completableFuture.completeExceptionally(e);
+            } catch (final Throwable t) {
+                completableFuture.completeExceptionally(t);
             }
             return completableFuture;
         }

@@ -28,7 +28,6 @@ import cloud.commandframework.annotations.injection.ParameterInjectorRegistry;
 import cloud.commandframework.arguments.CommandArgument;
 import cloud.commandframework.arguments.flags.FlagContext;
 import cloud.commandframework.context.CommandContext;
-import cloud.commandframework.exceptions.CommandExecutionException;
 import cloud.commandframework.execution.CommandExecutionHandler;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -64,7 +63,7 @@ class MethodCommandExecutionHandler<C> implements CommandExecutionHandler<C> {
     }
 
     @Override
-    public void execute(final @NonNull CommandContext<C> commandContext) {
+    public void execute(final @NonNull CommandContext<C> commandContext) throws Throwable {
         final List<Object> arguments = new ArrayList<>(this.parameters.length);
         final FlagContext flagContext = commandContext.flags();
 
@@ -115,13 +114,8 @@ class MethodCommandExecutionHandler<C> implements CommandExecutionHandler<C> {
         }
 
         /* Invoke the command method */
-        try {
-            this.methodHandle.invokeWithArguments(arguments);
-        } catch (final Error e) {
-            throw e;
-        } catch (final Throwable throwable) {
-            throw new CommandExecutionException(throwable);
-        }
+        /* Note: may throw */
+        this.methodHandle.invokeWithArguments(arguments);
     }
 
 }

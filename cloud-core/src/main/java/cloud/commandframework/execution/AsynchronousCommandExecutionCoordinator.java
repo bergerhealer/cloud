@@ -37,7 +37,6 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ForkJoinPool;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -79,7 +78,7 @@ public final class AsynchronousCommandExecutionCoordinator<C> extends CommandExe
     ) {
         final CompletableFuture<CommandResult<C>> resultFuture = new CompletableFuture<>();
 
-        final Consumer<Command<C>> commandConsumer = command -> {
+        final CheckedConsumer<Command<C>> commandConsumer = command -> {
             if (this.commandManager.postprocessContext(commandContext, command) == State.ACCEPTED) {
                 try {
                     command.getCommandExecutionHandler().execute(commandContext);
@@ -94,15 +93,20 @@ public final class AsynchronousCommandExecutionCoordinator<C> extends CommandExe
         if (this.synchronizeParsing) {
             final @NonNull Pair<@Nullable Command<C>, @Nullable Exception> pair =
                     this.getCommandTree().parse(commandContext, input);
+            final CompletableFuture<CommandResult<C>> future = new CompletableFuture<>();
             if (pair.getSecond() != null) {
-                final CompletableFuture<CommandResult<C>> future = new CompletableFuture<>();
                 future.completeExceptionally(pair.getSecond());
-                return future;
+            } else {
+                this.executor.execute(() -> {
+                    try {
+                        commandConsumer.accept(pair.getFirst());
+                        future.complete(new CommandResult<>(commandContext));
+                    } catch (Throwable t) {
+                        future.completeExceptionally(new CommandExecutionException(t));
+                    }
+                });
             }
-            return CompletableFuture.supplyAsync(() -> {
-                commandConsumer.accept(pair.getFirst());
-                return new CommandResult<>(commandContext);
-            }, this.executor);
+            return future;
         }
 
         this.executor.execute(() -> {
@@ -112,17 +116,34 @@ public final class AsynchronousCommandExecutionCoordinator<C> extends CommandExe
                 if (pair.getSecond() != null) {
                     resultFuture.completeExceptionally(pair.getSecond());
                 } else {
-                    commandConsumer.accept(pair.getFirst());
-                    resultFuture.complete(new CommandResult<>(commandContext));
+                    try {
+                        commandConsumer.accept(pair.getFirst());
+                        resultFuture.complete(new CommandResult<>(commandContext));
+                    } catch (Throwable handlerException) {
+                        resultFuture.completeExceptionally(new CommandExecutionException(handlerException));
+                    }
                 }
-            } catch (final Exception e) {
-                resultFuture.completeExceptionally(e);
+            } catch (final Throwable t) {
+                resultFuture.completeExceptionally(t);
             }
         });
 
         return resultFuture;
     }
 
+    /**
+     * A {@link java.util.function.Consumer} that can throw exceptions
+     *
+     * @param <T> Type of result
+     */
+    private interface CheckedConsumer<T> {
+        /**
+         * Performs this operation on the given argument.
+         *
+         * @param t the input argument
+         */
+        void accept(T t) throws Throwable;
+    }
 
     /**
      * Builder for {@link AsynchronousCommandExecutionCoordinator} instances
