@@ -980,6 +980,34 @@ public class Command<C> {
         // End of compound helper methods
 
         /**
+         * Specify a command execution handler to execute before the current handler
+         *
+         * @param commandExecutionHandler New execution handler
+         * @return New builder instance using the command execution handler
+         */
+        public @NonNull Builder<C> prependHandler(final @NonNull CommandExecutionHandler<C> commandExecutionHandler) {
+            final CommandExecutionHandler<C> handlerAfter = this.commandExecutionHandler;
+            return handler((context) -> {
+                commandExecutionHandler.execute(context);
+                handlerAfter.execute(context);
+            });
+        }
+
+        /**
+         * Specify a command execution handler to execute after the current handler
+         *
+         * @param commandExecutionHandler New execution handler
+         * @return New builder instance using the command execution handler
+         */
+        public @NonNull Builder<C> appendHandler(final @NonNull CommandExecutionHandler<C> commandExecutionHandler) {
+            final CommandExecutionHandler<C> handlerBefore = this.commandExecutionHandler;
+            return handler((context) -> {
+                handlerBefore.execute(context);
+                commandExecutionHandler.execute(context);
+            });
+        }
+
+        /**
          * Specify the command execution handler
          *
          * @param commandExecutionHandler New execution handler
