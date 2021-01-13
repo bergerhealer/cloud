@@ -64,7 +64,7 @@ class MethodCommandExecutionHandler<C> implements CommandExecutionHandler<C> {
     }
 
     @Override
-    public void execute(final @NonNull CommandContext<C> commandContext) {
+    public void execute(final @NonNull CommandContext<C> commandContext) throws Throwable {
         final List<Object> arguments = new ArrayList<>(this.parameters.length);
         final FlagContext flagContext = commandContext.flags();
 

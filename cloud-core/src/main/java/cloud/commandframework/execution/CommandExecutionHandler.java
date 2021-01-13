@@ -40,9 +40,9 @@ public interface CommandExecutionHandler<C> {
      * Handle command execution
      *
      * @param commandContext Command context
+     * @throws Throwable When the underlying executor throws an unexpected exception or error
      */
-    void execute(@NonNull CommandContext<C> commandContext);
-
+    void execute(@NonNull CommandContext<C> commandContext) throws Throwable;
 
     /**
      * Command execution handler that does nothing
@@ -52,7 +52,7 @@ public interface CommandExecutionHandler<C> {
     class NullCommandExecutionHandler<C> implements CommandExecutionHandler<C> {
 
         @Override
-        public void execute(final @NonNull CommandContext<C> commandContext) {
+        public void execute(final @NonNull CommandContext<C> commandContext) throws Throwable {
         }
 
     }
