@@ -34,7 +34,7 @@ allprojects {
     apply<CheckstylePlugin>()
     apply<LicenseBasePlugin>()
 
-    group = "cloud.commandframework"
+    group = "org.bergerhealer.cloud.commandframework"
     version = "1.4.0-SNAPSHOT"
     description = "Command framework and dispatcher for the JVM"
 

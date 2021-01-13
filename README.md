@@ -1,8 +1,46 @@
+# Bergerhealer Cloud Enhancements
 
-<div align="center">  
- <img src="icons/cloud.png" width="300px"/>  
-</div>  
-  
+This repository hosts some improvements to the cloud command framework rejected by upstream.
+These changes are critical to make integrating cloud in other projects a success.
+
+To use this version of cloud, use the following repository:
+```xml
+<repository>
+    <id>MG-Dev Jenkins CI Maven Repository</id>
+    <url>https://ci.mg-dev.eu/plugin/repository/everything</url>
+</repository>
+```
+
+And the following group id: `org.bergerhealer.cloud.commandframework`. For example:
+```xml
+<dependency>
+    <groupId>org.bergerhealer.cloud.commandframework</groupId>
+    <artifactId>cloud-paper</artifactId>
+    <version>1.2.0-SNAPSHOT</version>
+</dependency>
+<dependency>
+    <groupId>org.bergerhealer.cloud.commandframework</groupId>
+    <artifactId>cloud-annotations</artifactId>
+    <version>1.2.0-SNAPSHOT</version>
+</dependency>
+```
+
+## Changes
+This fork adds the following features/fixes
+
+### Handling of errors
+Also handles errors at runtime using CommandExecutionException
+
+### InitializationMethod annotation
+Makes it easier to register parsers / suggestion providers through annotations.
+The annotation parser and/or the command manager can be passed to the method.
+```java
+@InitializationMethod
+private void init(AnnotationParser<CommandSender> parser, CommandManager<CommandSender> manager) {
+    // Do your things here
+}
+```
+
 # cloud command framework
 
 ![license](https://img.shields.io/github/license/Incendo/cloud.svg)
