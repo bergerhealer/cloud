@@ -121,14 +121,14 @@ public abstract class CommandExecutionCoordinator<C> {
                             command.getCommandExecutionHandler().execute(commandContext);
                         } catch (final CommandExecutionException exception) {
                             completableFuture.completeExceptionally(exception);
-                        } catch (final Exception exception) {
+                        } catch (final Throwable exception) {
                             completableFuture.completeExceptionally(new CommandExecutionException(exception, commandContext));
                         }
                     }
                     completableFuture.complete(new CommandResult<>(commandContext));
                 }
-            } catch (final Exception e) {
-                completableFuture.completeExceptionally(e);
+            } catch (final Throwable t) {
+                completableFuture.completeExceptionally(t);
             }
             return completableFuture;
         }
